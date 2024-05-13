@@ -5,7 +5,7 @@ A personal project inspired by the one and only **[Code Bullet](https://www.yout
 
 #### Overview
 In this program, a group of dots are released into an environment with walls and a goal object.
-The dots have simulated velocity and acceleration, as well as an input list of acceleration vectors, which is the genetic component.
+The dots have simulated velocity and acceleration, as well as an input list of acceleration vectors, used as "genes", subject to mutations and natural selection.
 
 ![](https://github.com/Arduino88/Evolutionary-Dots/blob/main/evolutionary-dots.gif?raw=true)
 
