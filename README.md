@@ -18,7 +18,7 @@ The dots have simulated velocity and acceleration, as well as an input list of a
 - Then, a new set of dots are created, with a probability of having a dot as a parent proportional to the parent's fitness (fitter dots are more likely as parents).
 - Randomly, for each child in the new dot set, A gaussian noise distribution is calculated and applied to existing vectors.
 - This is controlled by a mutation rate variable, with a low probability of an individual vector being mutated.
-- The best dot is saved from the original run, and is added to the new run to prevent detrimental mutations regressing progress.
+- The best dot is saved from the previous run, and is added to the next generation to prevent detrimental mutations regressing progress (This is the green dot).
 - All dots are re-initialized at the beginning of their acceleration list, and placed at the shared starting position.
 - The next run is initiated.
 
