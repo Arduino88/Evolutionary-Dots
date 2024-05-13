@@ -59,14 +59,15 @@ class Brain:
             randomAngle = random.uniform(-1, 1) * math.pi / 2
             self.directions.append(np.array([math.cos(randomAngle) * random.choice((-1, 1)), math.sin(randomAngle) * random.choice((-1, 1))]))
 
-    def clone(self, parentFitness, bestDot: bool):
+    def clone(self, bestDot: bool):
         clone = Brain(size = self.size)
         mutationRate = 0.01
         noiseFactor = 0.1
         for i, direction in enumerate(self.directions):
             rand = random.random()
-            noise = np.random.normal(0, 2, len(direction))
+
             if rand < mutationRate and not bestDot:
+                noise = np.random.normal(0, 2, len(direction))
                 newDirection = np.array([direction[0], direction[1]])
                 #add noise to direction
                 newDirection = direction + noise * noiseFactor
@@ -100,9 +101,9 @@ class Dot:
         self.vel = np.array([0.0, 0.0])
         self.acc = np.array([0.0, 0.0])
 
-    def draw(self, screen, paramColor):
+    def draw(self, screen, paramColor, size):
         #print(self.pos)
-        pygame.draw.circle(screen, paramColor, self.pos, dotSize)
+        pygame.draw.circle(screen, paramColor, self.pos, size)
 
     def move(self, goalPos):
         if self.brain.step >= len(self.brain.directions):
@@ -146,8 +147,11 @@ class Dot:
 
     def getChild(self):
         child = Dot()
-        child.brain = self.brain.clone(self.fitness, bestDot=False)
+        child.brain = self.brain.clone(bestDot=False)
         return child
+    
+    def printStats(self):
+        print(f'BRAIN: step {self.brain.step}, directions length {len(self.brain.directions)}, \nPHYSICS: pos {self.pos}, vel {self.vel}, dead? {self.dead}, reachedGoal? {self.reachedGoal}, stepsExhausted? {self.stepsExhausted}')
 
 
 class DotsGame:
@@ -157,7 +161,6 @@ class DotsGame:
         self.startPos = startPos
         self.count = count
         self.dots = []
-        self.bestDotBrainDirections = None
         self.highestFitness = 0
         self.goal = Goal(goalPos)
         self.wall1 = Wall(wallColor, width=60, pos=np.array([800, 0]), height = 500)
@@ -166,6 +169,8 @@ class DotsGame:
         #self.wall4 = Wall(wallColor, width=400, pos=np.array([1000, 400]), height = 60)
 
         self.initializeDots()
+
+        self.bestDot = self.dots[0]
 
 
     def initializeDots(self):
@@ -177,6 +182,7 @@ class DotsGame:
             dot.fitness = 0.0
             dot.brain.randomize()
 
+
     def updateDots(self, screen):
         if self.allDotsDead():
             self.running = False
@@ -186,25 +192,34 @@ class DotsGame:
         self.wall2.draw(screen)
         self.wall3.draw(screen)
         #self.wall4.draw(screen)
-        for i, dot in enumerate(reversed(self.dots)):
+
+        for i, dot in enumerate(self.dots):
             dot.move(self.goal.pos)
             self.wall1.checkCollision(dot)
             self.wall2.checkCollision(dot)
             self.wall3.checkCollision(dot)
             #self.wall4.checkCollision(dot)
-            if i == 0:
-                dot.draw(screen, bestDotColor)
-            else:
-                dot.draw(screen, dotColor)
+            if i == self.count:
+                print('best dot directions - LIST:', dot.brain.directions[0])
+                print('\nBEST DOT STATS:')
+                self.bestDot.printStats()
+                print('\nLAST DOT IN LIST STATS:')
+                dot.printStats()
+                dot.draw(screen, bestDotColor, dotSize * 2)
+            elif not dot.dead:
+                dot.draw(screen, dotColor, dotSize)
 
     def updateScreen(self, screen):
         pygame.draw.rect(screen,(100, 100, 90), [0, 0, screenWidth, screenHeight])
 
     def allDotsDead(self):
-        for dot in self.dots:
-            if not dot.dead and not dot.reachedGoal:
-                return False
-        return True
+        if self.bestDot.dead or self.bestDot.reachedGoal:
+            for dot in self.dots:
+                if not dot.dead and not dot.reachedGoal:
+                    return False
+            return True
+        else:
+            return False
     
     def naturalSelection(self):
         newDots = []
@@ -218,11 +233,14 @@ class DotsGame:
             newDots.append(parent.getChild())
 
         self.dots = newDots
+        self.dots.append(self.bestDot)
         for dot in self.dots:
             #print(f'Dots count: {len(self.dots)}', dot.brain.directions[0])
             dot.pos = self.startPos
             dot.brain.step = 1
         self.gen += 1
+        print(f'best dot directions - bestDot:', self.bestDot.brain.directions[0])
+        print(self.count, len(self.dots))
         print(f'generation finished... \nnow starting generation {self.gen}.')
             
     def calculateFitness(self):
@@ -246,15 +264,27 @@ class DotsGame:
         print('BAD THINGS HAPPENING')
         return None
     
-    def getBestDot(self):
+    def updateBestDot(self):
         for dot in self.dots:
             if dot.fitness > self.highestFitness:
-                self.bestDotBrainDirections = dot.brain.clone(dot.fitness, bestDot=True).directions
+                newDot = Dot()
+                newDot.brain = dot.brain.clone(bestDot = True)
+                self.bestDot = newDot
                 self.highestFitness = dot.fitness
+                print(self.highestFitness, '<-- highest fitness updated')
+                
 
-    def addBestDot(self):
-        if self.bestDotBrainDirections is not None:
-            self.dots[0].brain.directions = self.bestDotBrainDirections
+    def resetFinalDot(self):
+        self.bestDot.fitness = 0
+        self.bestDot.brain.step = 1
+        self.bestDot.dead = False
+        self.bestDot.fitness = float()
+        self.bestDot.stepsExhausted = False
+        self.bestDot.brain = self.dots[-1].brain.clone(bestDot=True)
+        self.bestDot.pos = dotStartPos
+        self.bestDot.vel = np.array([0.0, 0.0])
+        self.bestDot.acc = np.array([0.0, 0.0])
+        self.bestDot.reachedGoal = False
     
 
 
@@ -262,7 +292,7 @@ def main():
 
     pygame.init()
     screen = pygame.display.set_mode((screenWidth, screenHeight))
-    mainGame = DotsGame(200, (10, screenHeight / 2), goalPos=(screenWidth - 180, screenHeight - 150))
+    mainGame = DotsGame(30, (10, screenHeight / 2), goalPos=(screenWidth - 180, screenHeight - 150))
     screen.fill(Color('black'))
 
 
@@ -288,9 +318,9 @@ def main():
 
 
             mainGame.calculateFitness()
-            mainGame.getBestDot()
+            mainGame.updateBestDot()
             mainGame.naturalSelection()
-            mainGame.addBestDot()
+            #mainGame.resetFinalDot()
 
             
 
