@@ -137,8 +137,8 @@ class Dot:
         if self.fitness is not None:
             self.fitness = 1 / (distanceToGoal ** 2)
         if self.reachedGoal:
-            print(f'Goal Reached, fitness increasing from {self.fitness} to {self.fitness * 10}')
-            self.fitness * (len(self.brain.directions) - self.brain.step)
+            print(f'Goal Reached, fitness increasing from {self.fitness} to {self.fitness * (len(self.brain.directions) - self.brain.step)}')
+            self.fitness *= (len(self.brain.directions) - self.brain.step)
         elif self.dead and not self.stepsExhausted:
             self.fitness / 2
 
