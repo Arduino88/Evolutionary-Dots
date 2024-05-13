@@ -7,6 +7,8 @@ A personal project inspired by the one and only **[Code Bullet](https://www.yout
 In this program, a group of dots are released into an environment with walls and a goal object.
 The dots have simulated velocity and acceleration, as well as an input list of acceleration vectors, which is the genetic component.
 
+![](https://github.com/Arduino88/Evolutionary-Dots/blob/main/evolutionary-dots.gif?raw=true)
+
 #### In each run:
 - The dots iterate over their respective list, setting their acceleration to the contained vector, and checking for collisions.
 - Once every dot has either died or reached the goal, their fitnesses are calculated:
@@ -19,3 +21,4 @@ The dots have simulated velocity and acceleration, as well as an input list of a
 - The best dot is saved from the original run, and is added to the new run to prevent detrimental mutations regressing progress.
 - All dots are re-initialized at the beginning of their acceleration list, and placed at the shared starting position.
 - The next run is initiated.
+
